@@ -14,6 +14,19 @@ typedef struct Node
 } Node;
 
 int get_letter_value(char c);
+Node* build(Node** head, int PQ_size);
+//void traverse(Node** head);
+void traverse(Node* head, int arr[], int top);
+Node* new_node(int frequency, char symbol);
+int get_letter_value(char c);
+Node* pop(Node** head);
+void push(Node** head, Node* node);
+int is_empty(Node** head);
+
+int is_leaf(Node* node)
+{
+    return node->LSON == NULL && node->RSON ==NULL;
+}
 
 Node* new_node(int frequency, char symbol)
 {
@@ -23,20 +36,11 @@ Node* new_node(int frequency, char symbol)
     node->symbol = symbol;
     node->LSON = NULL;
     node->RSON = NULL;
-
-    return node;
-}
-
-Node* new_PQ_node(int frequency, char symbol)
-{
-    Node* node;
-    node = (Node*) malloc(sizeof(Node));
-    node->frequency = frequency;
-    node->symbol = symbol;
     node->next = NULL;
-    
+
     return node;
 }
+
 
 int get_letter_value(char c)
 {
@@ -53,20 +57,18 @@ Node* pop(Node** head)
     return (temp);
 }
 
-void push(Node** head, int frequency, char symbol)
+void push(Node** head, Node* node)
 {
     Node* temp = (*head);
 
-    Node* node = new_PQ_node(frequency, symbol);
-
-    if((*head)->frequency > frequency)
+    if((*head)->frequency > node->frequency)
     {
 	node->next = *head;
 	(*head) = node;
     }
     else
     {
-	while(temp->next != NULL && temp->next->frequency < frequency)
+	while(temp->next != NULL && temp->next->frequency < node->frequency)
 	{
 	    temp = temp->next;
 	}
@@ -87,6 +89,7 @@ int main(int argc, char *argv[])
     FILE *f;
     int frequency[LETTER_COUNT];
     int i;
+    int PQ_size = 0;
     Node* head = NULL;
     f = fopen(argv[1], "r");
     for(i = 0; i < LETTER_COUNT; i++)
@@ -113,9 +116,16 @@ int main(int argc, char *argv[])
 	{
 	    //printf("%c %d\n", letter, frequency[i]);
 	    if(head == NULL)
-		head = new_PQ_node(frequency[i], letter);
+	    {
+		head = new_node(frequency[i], letter);
+		PQ_size = 1;
+	    }
 	    else
-		push(&head, frequency[i], letter);
+	    {
+		Node* push_node = new_node(frequency[i], letter);
+		push(&head, push_node);
+		PQ_size++;
+	    }
 	}	
     }
 
@@ -129,21 +139,89 @@ int main(int argc, char *argv[])
 	{
 	    //printf("%c %d\n", letter, frequency[i]);
 	    if(head == NULL)
-		head = new_PQ_node(frequency[i], letter);
+		head = new_node(frequency[i], letter);
 	    else
 		push(&head, frequency[i], letter);
 	}	
     }*/
 
+    /* For printing PQ
     Node* temp;
     while(!is_empty(&head))
     {
 	temp = pop(&head);
 	printf("%c %d\n", temp->symbol, temp->frequency);
-	
-    }
+    }*/
+
+    Node* root;
+    root = build(&head, PQ_size);
+
+    int arr[100];
+    //traverse(head, arr, 0);
 }
 
-Node* build(int* frequency)
+Node* build(Node** head, int PQ_size)
 {
+    int i;
+    Node* node;
+    for(i = 0; i < PQ_size ; i++)
+    {
+	node = new_node(0, '|');
+	node->LSON = pop(head);
+	node->RSON = pop(head);
+	node->frequency = node->LSON->frequency + node->RSON->frequency;
+	push(head, node);
+    }
+    Node* root = pop(head);
+    return root;
+}
+
+/*
+void traverse(Node** head)
+{
+    int i;
+    char outputs[52][200];
+    Node* temp = *head;
+
+    for(i = 0; i < LETTER_COUNT; i++)
+    {
+	char letter;
+	if (i < 26) letter = (i + 65);
+	else letter = (i + 6 +65);
+
+	while(temp->symbol != letter)
+	{
+	     
+	}
+
+	temp = *head;
+    }
+    
+
+    
+}*/
+
+void traverse(Node* head, int arr[], int top)
+{
+    int i;
+    if((head)->LSON)
+    {
+	arr[top] = 0;
+	traverse((head)->LSON, arr, top + 1);
+    }
+    if((head)->RSON)
+    {
+	arr[top] = 0;
+	traverse((head)->RSON, arr, top + 1);
+    }
+
+    if(is_leaf(head))
+    {
+	int size = sizeof(*arr) / sizeof(int);
+	printf("%c", head->frequency);
+	for(i = 0; i < size; i++)
+	{
+	    printf("%d", arr[i]);
+	}
+    }
 }
