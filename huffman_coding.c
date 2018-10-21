@@ -16,7 +16,7 @@ typedef struct Node
 int get_letter_value(char c);
 Node* build(Node** head, int PQ_size);
 //void traverse(Node** head);
-void traverse(Node* head, int arr[], int top);
+void traverse(Node* head, int arr[], int top, int *huffman);
 Node* new_node(int frequency, char symbol);
 int get_letter_value(char c);
 Node* pop(Node** head);
@@ -46,6 +46,7 @@ int get_letter_value(char c)
 {
     int val = (int) c;
     val -= 65; //Ascii value for A
+    if(val >= 26) val -= 6;
     return val;
 }
 
@@ -53,8 +54,9 @@ Node* pop(Node** head)
 {
     Node* temp;
     temp = *head;
-    *head = (*head)->next;
-    return (temp);
+    *head = temp->next;
+    temp->next = NULL;
+    return temp;
 }
 
 void push(Node** head, Node* node)
@@ -88,14 +90,16 @@ int main(int argc, char *argv[])
     char c;
     FILE *f;
     int frequency[LETTER_COUNT];
-    int i;
+    int i, j;
     int PQ_size = 0;
+    char letter;
     Node* head = NULL;
-    f = fopen(argv[1], "r");
     for(i = 0; i < LETTER_COUNT; i++)
     {
 	frequency[i] = 0;
     }
+
+    f = fopen(argv[1], "r");
     do
     {
 	c = fgetc(f);
@@ -109,7 +113,6 @@ int main(int argc, char *argv[])
 
     for(i = 0; i < LETTER_COUNT; i++)
     {
-	char letter;
 	if (i < 26) letter = (i + 65);
 	else letter = (i + 6 +65);
 	if(frequency[i] != 0 )
@@ -156,15 +159,36 @@ int main(int argc, char *argv[])
     Node* root;
     root = build(&head, PQ_size);
 
+    int huffman[52][100];
+    for(i = 0; i < 52; i++)
+    {
+	huffman[i][0] = -1;
+    }
     int arr[100];
-    //traverse(head, arr, 0);
+    traverse(head, arr, 0, *huffman);
+    
+    for(i = 0; i < 52; i++)
+    {
+	if(i >= 26) letter = i + 65 + 6;
+	else letter = i + 65;
+	if(huffman[i][0] != -1)
+	    printf("%c ", letter);
+	for(j = 0; j < 100; j++)
+	{
+	    if(huffman[i][j] == -1) break;
+	    
+	    printf("%d", huffman[i][j]);
+	}
+	if(huffman[i][0] != -1)
+	    printf("\n");
+    }
 }
 
 Node* build(Node** head, int PQ_size)
 {
     int i;
     Node* node;
-    for(i = 0; i < PQ_size ; i++)
+    for(i = 0; i < PQ_size - 2; i++)
     {
 	node = new_node(0, '|');
 	node->LSON = pop(head);
@@ -201,27 +225,29 @@ void traverse(Node** head)
     
 }*/
 
-void traverse(Node* head, int arr[], int top)
+void traverse(Node* head, int arr[], int top, int *huffman)
 {
     int i;
     if((head)->LSON)
     {
 	arr[top] = 0;
-	traverse((head)->LSON, arr, top + 1);
+	traverse((head)->LSON, arr, top + 1, huffman);	
     }
     if((head)->RSON)
     {
-	arr[top] = 0;
-	traverse((head)->RSON, arr, top + 1);
+	arr[top] = 1;
+	traverse((head)->RSON, arr, top + 1, huffman);
     }
 
     if(is_leaf(head))
-    {
-	int size = sizeof(*arr) / sizeof(int);
-	printf("%c", head->frequency);
-	for(i = 0; i < size; i++)
+    {	
+	//printf("%c ", head->symbol);
+	int letter_val = get_letter_value(head->symbol);
+	for(i = 0; i < top; i++)
 	{
-	    printf("%d", arr[i]);
+	    *((huffman+letter_val*100) + i) = arr[i];
+	    //printf("%d", arr[i]);
 	}
+	*((huffman+letter_val*100) + top) = -1;
     }
 }
