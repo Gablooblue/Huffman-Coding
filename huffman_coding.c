@@ -54,6 +54,7 @@ Node* pop(Node** head)
     Node* temp;
     temp = *head;
     *head = (*head)->next;
+    temp->next = NULL;
     return (temp);
 }
 
@@ -144,20 +145,19 @@ int main(int argc, char *argv[])
 		push(&head, frequency[i], letter);
 	}	
     }*/
-
-    /* For printing PQ
+    /*
     Node* temp;
     while(!is_empty(&head))
     {
 	temp = pop(&head);
 	printf("%c %d\n", temp->symbol, temp->frequency);
-    }*/
-
+    }
+    */
     Node* root;
     root = build(&head, PQ_size);
 
     int arr[100];
-    //traverse(head, arr, 0);
+    traverse(head, arr, 0);
 }
 
 Node* build(Node** head, int PQ_size)
@@ -217,8 +217,8 @@ void traverse(Node* head, int arr[], int top)
 
     if(is_leaf(head))
     {
-	int size = sizeof(*arr) / sizeof(int);
-	printf("%c", head->frequency);
+	int size = sizeof(*arr);
+	printf("%c", head->symbol);
 	for(i = 0; i < size; i++)
 	{
 	    printf("%d", arr[i]);
