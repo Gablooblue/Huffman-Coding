@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 #define LETTER_COUNT 52
+#define PQ_MAX 100 
+#define HEAP_MAX 52
 
 typedef struct Node
 {
@@ -10,18 +12,22 @@ typedef struct Node
     char symbol;
     struct Node *LSON;
     struct Node *RSON;
-    struct Node *next;
 } Node;
 
 int get_letter_value(char c);
-Node* build(Node** head, int PQ_size);
+Node* build(Node** PQ);
 //void traverse(Node** head);
-void traverse(Node* head, int arr[], int top);
+void traverse(Node* head, int arr[], int top, int *huffman);
 Node* new_node(int frequency, char symbol);
 int get_letter_value(char c);
 Node* pop(Node** head);
 void push(Node** head, Node* node);
 int is_empty(Node** head);
+void Heapify(Node** B, int r);
+void PQ_Insert(Node** P, Node* node);
+Node** PQ_Extract(Node** P);
+
+int PQ_size = 0; 
 
 int is_leaf(Node* node)
 {
@@ -36,7 +42,6 @@ Node* new_node(int frequency, char symbol)
     node->symbol = symbol;
     node->LSON = NULL;
     node->RSON = NULL;
-    node->next = NULL;
 
     return node;
 }
@@ -46,16 +51,18 @@ int get_letter_value(char c)
 {
     int val = (int) c;
     val -= 65; //Ascii value for A
+    if(val > 26) val -= 6;
     return val;
 }
 
+/*
 Node* pop(Node** head)
 {
     Node* temp;
     temp = *head;
-    *head = (*head)->next;
+    *head = temp->next;
     temp->next = NULL;
-    return (temp);
+    return temp;
 }
 
 void push(Node** head, Node* node)
@@ -69,7 +76,7 @@ void push(Node** head, Node* node)
     }
     else
     {
-	while(temp->next != NULL && temp->next->frequency < node->frequency)
+	while(temp->next != NULL && temp->next->frequency <= node->frequency)
 	{
 	    temp = temp->next;
 	}
@@ -78,10 +85,12 @@ void push(Node** head, Node* node)
 	temp->next = node;
     }
 }
+*/
 
 int is_empty(Node** head)
 {
-    return (*head) == NULL;
+    //return (*head) == NULL;
+    return PQ_size == 0;
 }
 
 int main(int argc, char *argv[])
@@ -89,14 +98,16 @@ int main(int argc, char *argv[])
     char c;
     FILE *f;
     int frequency[LETTER_COUNT];
-    int i;
-    int PQ_size = 0;
+    int i, j;
+    Node *(PQ[PQ_MAX]);
+    char letter;
     Node* head = NULL;
-    f = fopen(argv[1], "r");
     for(i = 0; i < LETTER_COUNT; i++)
     {
 	frequency[i] = 0;
     }
+
+    f = fopen(argv[1], "r");
     do
     {
 	c = fgetc(f);
@@ -108,9 +119,9 @@ int main(int argc, char *argv[])
 	
     }while(c != EOF);
 
+    /*
     for(i = 0; i < LETTER_COUNT; i++)
     {
-	char letter;
 	if (i < 26) letter = (i + 65);
 	else letter = (i + 6 +65);
 	if(frequency[i] != 0 )
@@ -129,6 +140,19 @@ int main(int argc, char *argv[])
 	    }
 	}	
     }
+    */
+
+    for(i = 0; i < LETTER_COUNT; i++)
+    {
+	if (i < 26) letter = (i + 65);
+	else letter = (i + 6 +65);
+	if(frequency[i] != 0 )
+	{
+	    Node* push_node = new_node(frequency[i], letter);
+	    PQ_Insert(PQ, push_node);
+	    //printf("%c %d\n", letter, frequency[i]);
+	}	
+    }
 
     /*
     for(i = 0; i < LETTER_COUNT; i++)
@@ -145,83 +169,153 @@ int main(int argc, char *argv[])
 		push(&head, frequency[i], letter);
 	}	
     }*/
+
     /*
-    Node* temp;
-    while(!is_empty(&head))
+    Node** temp;
+    while(PQ_size > 0)
     {
-	temp = pop(&head);
-	printf("%c %d\n", temp->symbol, temp->frequency);
-    }
-    */
+	temp = PQ_Extract(PQ);
+	//printf("%c %d\n", (*temp)->symbol, (*temp)->frequency);
+    }*/
     Node* root;
-    root = build(&head, PQ_size);
+    root = build(PQ);
+
+    int huffman[52][100];
+    for(i = 0; i < 52; i++)
+    {
+	for(j = 0; j < 100; j++)
+	{
+	    huffman[i][j] = -1;
+	}
+    }
 
     int arr[100];
-    traverse(head, arr, 0);
+    traverse(root, arr, 0, *huffman);
+    
+    for(i = 0; i < 52; i++)
+    {
+	if(i >= 26) letter = i + 65 + 6;
+	else letter = i + 65;
+	if(huffman[i][0] != -1)
+	    printf("%c ", letter);
+	for(j = 0; j < 100; j++)
+	{
+	    if(huffman[i][j] == -1) break;
+	    
+	    printf("%d", huffman[i][j]);
+	}
+	if(huffman[i][0] != -1)
+	    printf("\n");
+    }
 }
 
-Node* build(Node** head, int PQ_size)
+Node* build(Node** PQ)
 {
     int i;
     Node* node;
-    for(i = 0; i < PQ_size ; i++)
+    while(PQ_size > 1)
     {
 	node = new_node(0, '|');
-	node->LSON = pop(head);
-	node->RSON = pop(head);
+	node->LSON = *(PQ_Extract(PQ));
+	node->RSON = *(PQ_Extract(PQ));
 	node->frequency = node->LSON->frequency + node->RSON->frequency;
-	push(head, node);
+	printf("New node freq: %d + %d = %d\n", node->LSON->frequency, node->RSON->frequency, node->frequency);
+	PQ_Insert(PQ, node);
     }
-    Node* root = pop(head);
+    Node* root = *(PQ_Extract(PQ));
+	printf("Returning Root: %d + %d = %d\n", root->LSON->frequency, root->RSON->frequency, root->frequency);
     return root;
 }
 
-/*
-void traverse(Node** head)
+void traverse(Node* head, int arr[], int top, int *huffman)
 {
     int i;
-    char outputs[52][200];
-    Node* temp = *head;
-
-    for(i = 0; i < LETTER_COUNT; i++)
-    {
-	char letter;
-	if (i < 26) letter = (i + 65);
-	else letter = (i + 6 +65);
-
-	while(temp->symbol != letter)
-	{
-	     
-	}
-
-	temp = *head;
-    }
-    
-
-    
-}*/
-
-void traverse(Node* head, int arr[], int top)
-{
-    int i;
-    if((head)->LSON)
+    if(head->LSON)
     {
 	arr[top] = 0;
-	traverse((head)->LSON, arr, top + 1);
+	traverse((head)->LSON, arr, top + 1, huffman);	
     }
-    if((head)->RSON)
+    if(head->RSON)
     {
-	arr[top] = 0;
-	traverse((head)->RSON, arr, top + 1);
+	arr[top] = 1;
+	traverse((head)->RSON, arr, top + 1, huffman);
     }
 
     if(is_leaf(head))
-    {
-	int size = sizeof(*arr);
-	printf("%c", head->symbol);
-	for(i = 0; i < size; i++)
+    {	
+	//printf("%c ", head->symbol);
+	int letter_val = get_letter_value(head->symbol);
+	for(i = 0; i < top; i++)
 	{
-	    printf("%d", arr[i]);
+	    *((huffman+letter_val*100) + i) = arr[i];
+	    //printf("%d", arr[i]);
 	}
+	*((huffman+letter_val*100) + top) = -1;
     }
+}
+
+void PQ_Insert(Node** P, Node* node)
+{
+    int i, j;
+
+    //Overflow
+    if (PQ_size == PQ_MAX)
+    {
+	printf("PQ OVERFLOW");
+	return;
+    }
+
+    PQ_size++;
+    i = PQ_size;
+    j = i/2;
+
+    while(i > 1 && P[j]->frequency > node->frequency)
+    {
+	P[i] = P[j];
+	i = j;
+	j = i/2;
+    }
+    P[i] = node;
+    printf("%c is element %d\n", node->symbol, i);
+}
+
+Node** PQ_Extract(Node** P)
+{
+    if(PQ_size <= 0)
+    {
+	printf("PQ UNDERFLOW");
+	return NULL;
+    }
+    Node** x;
+    x = &P[0];
+    P[0] = P[PQ_size];
+    PQ_size--;
+    Heapify(P, 0);
+    printf("%c %d\n", (*x)->symbol, (*x)->frequency);
+    return x;
+}
+
+void Heapify(Node** B, int r)
+{
+    int i, j;
+    Node* k  = B[r];
+    i = r;
+    j = 2 * i;
+    
+    while(j <= PQ_size)
+    {
+	if( j < PQ_size && B[j + 1]->frequency < B[j]->frequency)
+	{
+	    j++;
+	}
+	if( B[j]->frequency < k->frequency )
+	{
+	    B[i] = B[j];
+	    i = j;
+	    j = i * 2;
+	}
+	else break;
+    }
+    B[i] = k;
+
 }
