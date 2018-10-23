@@ -115,8 +115,7 @@ int main(int argc, char *argv[])
 	if(isalpha(c))
 	{
 	    i = get_letter_value(c);
-	    frequency[i]++;
-	}
+	    frequency[i]++; }
 	
     }while(c != EOF);
 
@@ -218,9 +217,7 @@ Node* build(Node** PQ)
     {
 	node = new_node(0, '|');
 	node->LSON = *(PQ_Extract(PQ));
-	extract_after(PQ);
 	node->RSON = *(PQ_Extract(PQ));
-	extract_after(PQ);
 	node->frequency = node->LSON->frequency + node->RSON->frequency;
 	printf("New node freq: %d + %d = %d\n", node->LSON->frequency, node->RSON->frequency, node->frequency);
 	PQ_Insert(PQ, node);
@@ -286,22 +283,22 @@ void PQ_Insert(Node** P, Node* node)
 
 Node** PQ_Extract(Node** P)
 {
-    if(PQ_size <= 0)
+    if(PQ_size < 0)
     {
 	printf("PQ UNDERFLOW");
 	return NULL;
     }
     Node** x;
     x = &P[1];
+    P[1] = P[PQ_size];
+    PQ_size--;
+    Heapify(P, 1);
     printf("Extracting %c %d\n", (*x)->symbol, (*x)->frequency);
     return x;
 }
 
 void extract_after(Node** P)
 {
-    P[1] = P[PQ_size];
-    PQ_size--;
-    Heapify(P, 1);
 }
 
 void Heapify(Node** B, int r)
@@ -313,11 +310,11 @@ void Heapify(Node** B, int r)
     
     while(j <= PQ_size)
     {
-	if( j < PQ_size && B[j + 1]->frequency <= B[j]->frequency)
+	if( j < PQ_size && B[j + 1]->frequency < B[j]->frequency)
 	{
 	    j++;
 	}
-	if( B[j]->frequency <= k->frequency )
+	if( B[j]->frequency < k->frequency )
 	{
 	    B[i] = B[j];
 	    i = j;
