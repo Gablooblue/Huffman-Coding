@@ -12,6 +12,7 @@ typedef struct Node
     char symbol;
     struct Node *LSON;
     struct Node *RSON;
+    int time;
 } Node;
 
 int get_letter_value(char c);
@@ -29,6 +30,7 @@ Node** PQ_Extract(Node** P);
 void extract_after(Node** P);
 
 int PQ_size = 0; 
+int pushed = 0;
 
 int is_leaf(Node* node)
 {
@@ -43,6 +45,8 @@ Node* new_node(int frequency, char symbol)
     node->symbol = symbol;
     node->LSON = NULL;
     node->RSON = NULL;
+    node->time = pushed;
+    pushed++;
 
     return node;
 }
@@ -273,7 +277,11 @@ void PQ_Insert(Node** P, Node* node)
     i = PQ_size;
     j = i/2;
 
-    while(i > 1 && P[j]->frequency > node->frequency)
+    while(i > 1 && P[j]->frequency > node->frequency ||
+	    (i > 1 && P[j]->frequency == node->frequency && 
+	     (P[j]->time) > (node->time)
+		)
+)
     {
 	P[i] = P[j];
 	i = j;
@@ -313,11 +321,19 @@ void Heapify(Node** B, int r)
     
     while(j <= PQ_size)
     {
-	if( j < PQ_size && B[j + 1]->frequency <= B[j]->frequency)
+	if( j < PQ_size && B[j + 1]->frequency < B[j]->frequency ||
+	    (B[j]->frequency == B[j + 1]->frequency && 
+	     (B[j]->time) > (B[j + 1]->time)
+		)
+)
 	{
 	    j++;
 	}
-	if( B[j]->frequency <= k->frequency )
+	if( B[j]->frequency < k->frequency ||
+	    (B[j]->frequency == k->frequency && 
+	     (B[j]->time) < (k->time)
+		)
+	    )
 	{
 	    B[i] = B[j];
 	    i = j;
