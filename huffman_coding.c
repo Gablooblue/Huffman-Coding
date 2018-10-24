@@ -30,11 +30,21 @@ void extract_after(Node** P);
 int PQ_size = 0; 
 int pushed = 0;
 
+/*
+ * input: Node
+ * output: Boolean
+ * Checks if node is a leaf
+ */
 int is_leaf(Node* node)
 {
     return node->LSON == NULL && node->RSON ==NULL;
 }
 
+/*
+ * input: Frequency, Symbol
+ * output: Node
+ * Creates a new node with frequency and symbol as data
+ */
 Node* new_node(int frequency, char symbol)
 {
     Node* node;
@@ -50,17 +60,17 @@ Node* new_node(int frequency, char symbol)
 }
 
 
+/*
+ * input: Character
+ * output: Value of Character
+ * Transforms characters into letter indices for arrays
+ */
 int get_letter_value(char c)
 {
     int val = (int) c;
     val -= 65; //Ascii value for A
     if(val > 26) val -= 6;
     return val;
-}
-
-int is_empty(Node** head)
-{
-    return PQ_size == 0;
 }
 
 int main(int argc, char *argv[])
@@ -71,7 +81,6 @@ int main(int argc, char *argv[])
     int i, j;
     Node *(PQ[PQ_MAX]);
     char letter;
-    Node* head = NULL;
     for(i = 0; i < LETTER_COUNT; i++)
     {
 	frequency[i] = 0;
@@ -132,9 +141,13 @@ int main(int argc, char *argv[])
     }
 }
 
+/*
+ * input: Head of Priority Queue
+ * output: Root node of huffman tree
+ * Creates a huffman tree out of the priority queue
+ */
 Node* build(Node** PQ)
 {
-    int i;
     Node* node;
     while(PQ_size > 1)
     {
@@ -151,6 +164,12 @@ Node* build(Node** PQ)
     return root;
 }
 
+/*
+ * input: Huffman Tree head, Current array for Huffman value,
+ *  current top of array, array of huffman values of all letters
+ * output: None
+ * Traverses the huffman tree and puts values into huffman array
+ */
 void traverse(Node* head, int arr[], int top, int *huffman)
 {
     int i;
@@ -176,6 +195,11 @@ void traverse(Node* head, int arr[], int top, int *huffman)
     }
 }
 
+/* 
+ * input: Priority Queue, Node to be inserted
+ * output: None
+ * Inserts node into priority queue
+ */
 void PQ_Insert(Node** P, Node* node)
 {
     int i, j;
@@ -191,7 +215,7 @@ void PQ_Insert(Node** P, Node* node)
     i = PQ_size;
     j = i/2;
 
-    while(i > 1 && P[j]->frequency > node->frequency ||
+    while((i > 1 && P[j]->frequency > node->frequency) ||
 	    (i > 1 && P[j]->frequency == node->frequency && 
 	     (P[j]->time) > (node->time)
 		)
@@ -205,6 +229,11 @@ void PQ_Insert(Node** P, Node* node)
     P[i] = node;
 }
 
+/*
+ * input: Priority Queue
+ * output: Node
+ * Extracts the next element in the Priority Queue
+ */
 Node** PQ_Extract(Node** P)
 {
     if(PQ_size <= 0)
@@ -217,6 +246,11 @@ Node** PQ_Extract(Node** P)
     return x;
 }
 
+/*
+ * input: Priority queue
+ * output: None
+ * Callback after an extract operation
+ */
 void extract_after(Node** P)
 {
     P[1] = P[PQ_size];
@@ -224,6 +258,11 @@ void extract_after(Node** P)
     Heapify(P, 1);
 }
 
+/*
+ * input: Priority Queue 
+ * output: None
+ * Heapify's the priority queue
+ */
 void Heapify(Node** B, int r)
 {
     int i, j;
@@ -233,7 +272,7 @@ void Heapify(Node** B, int r)
     
     while(j <= PQ_size)
     {
-	if( j < PQ_size && B[j + 1]->frequency < B[j]->frequency ||
+	if( (j < PQ_size && B[j + 1]->frequency < B[j]->frequency) ||
 	    (B[j]->frequency == B[j + 1]->frequency && 
 	     (B[j]->time) > (B[j + 1]->time)
 		)
